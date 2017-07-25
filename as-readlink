@@ -1,0 +1,33 @@
+#!/bin/sh
+
+set -e
+
+[ $# != 1 ] && echo "Usage: ${0##*/} NODE" >&2 && exit 1
+
+NODE="$1"
+
+while :; do
+	if ! [ -L "$NODE" ]; then
+		if [ -e "$NODE" ]; then
+			ls --color=auto -d "$NODE"
+		else
+			printf "\\033[1;31m$NODE\\033[0m\\n"
+		fi
+
+		exit
+	fi
+
+	printf "\\033[1;36m$NODE\\033[0m -> "
+
+	RESOLVED="$(readlink "$NODE")"
+
+	# / не может быть симлинком куда-то. Если путь заканчивается на /, то он уже не считается симлинком. Поэтому можно считать, что здесь $NODE не заканчивается на /
+
+	if [ "${RESOLVED#/}" = "$RESOLVED" ]; then
+		DIR="${NODE%/*}/"
+		[ "$DIR" = "$NODE/" ] && DIR=""
+		NODE="$DIR$RESOLVED"
+	else
+		NODE="$RESOLVED"
+	fi
+done
