@@ -9,7 +9,7 @@ NODE="$1"
 while :; do
 	if ! [ -L "$NODE" ]; then
 		if [ -e "$NODE" ]; then
-			ls --color=auto -d "$NODE"
+			ls --color=always -d "$NODE"
 		else
 			printf "\\033[1;31m$NODE\\033[0m\\n"
 		fi
@@ -23,11 +23,17 @@ while :; do
 
 	# / не может быть симлинком куда-то. Если путь заканчивается на /, то он уже не считается симлинком. Поэтому можно считать, что здесь $NODE не заканчивается на /
 
-	if [ "${RESOLVED#/}" = "$RESOLVED" ]; then
-		DIR="${NODE%/*}/"
-		[ "$DIR" = "$NODE/" ] && DIR=""
-		NODE="$DIR$RESOLVED"
-	else
+	if [ "${RESOLVED#/}" != "$RESOLVED" ]; then
+		# readlink вернул абсолютный путь, всё ок
 		NODE="$RESOLVED"
+		continue
 	fi
+
+	DIR="${NODE%/*}/"
+
+	# Если NODE действительно содержал /, а значит, мы действительно отбросили справа один компонент пути, то он не мог быть "." или "..", т. к. "." или ".." - это уже папка и не симлинк
+
+	[ "$DIR" = "$NODE/" ] && DIR=""
+
+	NODE="$DIR$RESOLVED"
 done
